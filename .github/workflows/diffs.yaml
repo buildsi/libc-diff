@@ -1,0 +1,127 @@
+name: Libc Diffs
+on:
+  pull_request: []
+
+jobs:
+  get-libs:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+
+        # container base, path, update command
+        context: [["ubuntu:18.04", "/lib/x86_64-linux-gnu/libc.so.6"],
+                  ["ubuntu:20.04", "/usr/lib/x86_64-linux-gnu/libc.so.6"],
+                  ["ubuntu:22.04", "/usr/lib/x86_64-linux-gnu/libc.so.6"],
+                  ["centos:6", "/lib64/libc-2.12.so"],
+                  ["centos:7", "/usr/lib64/libc-2.17.so"],
+                  ["centos:8", "/usr/lib64/libc-2.28.so"],
+                  ["rockylinux:8", "/usr/lib64/libc-2.28.so"],
+                  ["rockylinux:9", "/usr/lib64/libctf.so"],
+                  ["amazonlinux:1", "/lib64/libc.so.6"],
+                  ["amazonlinux:2", "/lib64/libc.so.6"]]
+       
+    container:
+      image: ${{ matrix.context[0] }}
+
+    steps:
+    - name: Organize Files
+      run: |
+        mkdir -p /abi
+        # Note this assumes the filename does not matter
+        cp ${{ matrix.context[0] }} /abi/libc.so
+
+    - name: Upload Libs
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.context[0] }}-libs
+        path: /abi/libc.so
+
+  diffs:
+    runs-on: ubuntu-latest
+    needs: [get-libs]
+    strategy:
+      fail-fast: false
+      matrix:
+
+        # Testing every paired one! And the same for sanity check
+        libs: [['ubuntu:18.04-libs', 'ubuntu:18.04-libs'],
+               ['ubuntu:18.04-libs', 'ubuntu:18.04-libs'],
+               ['ubuntu:18.04-libs', 'ubuntu:20.04-libs'],
+               ['ubuntu:18.04-libs', 'ubuntu:22.04-libs'],
+               ['ubuntu:18.04-libs', 'centos:6-libs'],
+               ['ubuntu:18.04-libs', 'centos:7-libs'],
+               ['ubuntu:18.04-libs', 'centos:8-libs'],
+               ['ubuntu:18.04-libs', 'rockylinux:8-libs'],
+               ['ubuntu:18.04-libs', 'rockylinux:9-libs'],
+               ['ubuntu:18.04-libs', 'amazonlinux:1-libs'],
+               ['ubuntu:18.04-libs', 'amazonlinux:2-libs'],
+               ['ubuntu:20.04-libs', 'ubuntu:20.04-libs'],
+               ['ubuntu:20.04-libs', 'ubuntu:22.04-libs'],
+               ['ubuntu:20.04-libs', 'centos:6-libs'],
+               ['ubuntu:20.04-libs', 'centos:7-libs'],
+               ['ubuntu:20.04-libs', 'centos:8-libs'],
+               ['ubuntu:20.04-libs', 'rockylinux:8-libs'],
+               ['ubuntu:20.04-libs', 'rockylinux:9-libs'],
+               ['ubuntu:20.04-libs', 'amazonlinux:1-libs'],
+               ['ubuntu:20.04-libs', 'amazonlinux:2-libs'],
+               ['ubuntu:22.04-libs', 'ubuntu:22.04-libs'],
+               ['ubuntu:22.04-libs', 'centos:6-libs'],
+               ['ubuntu:22.04-libs', 'centos:7-libs'],
+               ['ubuntu:22.04-libs', 'centos:8-libs'],
+               ['ubuntu:22.04-libs', 'rockylinux:8-libs'],
+               ['ubuntu:22.04-libs', 'rockylinux:9-libs'],
+               ['ubuntu:22.04-libs', 'amazonlinux:1-libs'],
+               ['ubuntu:22.04-libs', 'amazonlinux:2-libs'],
+               ['centos:6-libs', 'centos:6-libs'],
+               ['centos:6-libs', 'centos:7-libs'],
+               ['centos:6-libs', 'centos:8-libs'],
+               ['centos:6-libs', 'rockylinux:8-libs'],
+               ['centos:6-libs', 'rockylinux:9-libs'],
+               ['centos:6-libs', 'amazonlinux:1-libs'],
+               ['centos:6-libs', 'amazonlinux:2-libs'],
+               ['centos:7-libs', 'centos:7-libs'],
+               ['centos:7-libs', 'centos:8-libs'],
+               ['centos:7-libs', 'rockylinux:8-libs'],
+               ['centos:7-libs', 'rockylinux:9-libs'],
+               ['centos:7-libs', 'amazonlinux:1-libs'],
+               ['centos:7-libs', 'amazonlinux:2-libs'],
+               ['centos:8-libs', 'centos:8-libs'],
+               ['centos:8-libs', 'rockylinux:8-libs'],
+               ['centos:8-libs', 'rockylinux:9-libs'],
+               ['centos:8-libs', 'amazonlinux:1-libs'],
+               ['centos:8-libs', 'amazonlinux:2-libs'],
+               ['rockylinux:8-libs', 'rockylinux:8-libs'],
+               ['rockylinux:8-libs', 'rockylinux:9-libs'],
+               ['rockylinux:8-libs', 'amazonlinux:1-libs'],
+               ['rockylinux:8-libs', 'amazonlinux:2-libs'],
+               ['rockylinux:9-libs', 'rockylinux:9-libs'],
+               ['rockylinux:9-libs', 'amazonlinux:1-libs'],
+               ['rockylinux:9-libs', 'amazonlinux:2-libs'],
+               ['amazonlinux:1-libs', 'amazonlinux:1-libs'],
+               ['amazonlinux:1-libs', 'amazonlinux:2-libs'],
+               ['amazonlinux:2-libs', 'amazonlinux:2-libs']]
+
+    steps:
+    - name: Download ${{ matrix.libs[0] }}
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.libs[0] }}
+        path: first/
+
+    - name: Download ${{ matrix.libs[1] }}
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ matrix.libs[1] }}
+        path: second/
+
+    - name: Show Files
+      run: |
+        ls first/
+        ls second/
+
+    - name: Run Libabigail
+      uses: buildsi/libabigail-action@0.0.11
+      with:
+        abidiff: first/abi/libc.so first/abi/libc.so
+        abidw: "--abidiff first/libc.so"
