@@ -2,6 +2,9 @@ name: Libc Diffs
 on:
   pull_request: []
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   get-libs:
@@ -46,7 +49,6 @@ jobs:
 
         # Testing every paired one! And the same for sanity check
         libs: [['ubuntu-18.04-libs', 'ubuntu-18.04-libs'],
-               ['ubuntu-18.04-libs', 'ubuntu-18.04-libs'],
                ['ubuntu-18.04-libs', 'ubuntu-20.04-libs'],
                ['ubuntu-18.04-libs', 'ubuntu-22.04-libs'],
                ['ubuntu-18.04-libs', 'centos-7-libs'],
