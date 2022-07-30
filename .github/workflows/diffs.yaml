@@ -113,5 +113,5 @@ jobs:
     - name: Run Libabigail
       uses: buildsi/libabigail-action@0.0.11
       with:
-        abidiff: first/libc.so first/libc.so
+        abidiff: first/libc.so second/libc.so
         abidw: "--abidiff first/libc.so"
