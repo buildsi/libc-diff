@@ -9,17 +9,17 @@ jobs:
       fail-fast: false
       matrix:
 
-        # container base, path, update command
-        context: [["ubuntu:18.04", "/lib/x86_64-linux-gnu/libc.so.6"],
-                  ["ubuntu:20.04", "/usr/lib/x86_64-linux-gnu/libc.so.6"],
-                  ["ubuntu:22.04", "/usr/lib/x86_64-linux-gnu/libc.so.6"],
-                  ["centos:6", "/lib64/libc-2.12.so"],
-                  ["centos:7", "/usr/lib64/libc-2.17.so"],
-                  ["centos:8", "/usr/lib64/libc-2.28.so"],
-                  ["rockylinux:8", "/usr/lib64/libc-2.28.so"],
-                  ["rockylinux:9", "/usr/lib64/libctf.so"],
-                  ["amazonlinux:1", "/lib64/libc.so.6"],
-                  ["amazonlinux:2", "/lib64/libc.so.6"]]
+        # container base, path, slug for artifact
+        context: [['ubuntu:18.04', '/lib/x86_64-linux-gnu/libc.so.6', 'ubuntu-18.04'],
+                  ['ubuntu:20.04', '/usr/lib/x86_64-linux-gnu/libc.so.6', 'ubuntu-20.04'],
+                  ['ubuntu:22.04', '/usr/lib/x86_64-linux-gnu/libc.so.6', 'ubuntu-22.04'],
+                  ['centos:6', '/lib64/libc-2.12.so', 'centos-6'],
+                  ['centos:7', '/usr/lib64/libc-2.17.so', 'centos-7'],
+                  ['centos:8', '/usr/lib64/libc-2.28.so', 'centos-8'],
+                  ['rockylinux:8', '/usr/lib64/libc-2.28.so', 'rockylinux-8'],
+                  ['rockylinux:9', '/usr/lib64/libctf.so', 'rockylinux-9'],
+                  ['amazonlinux:1', '/lib64/libc.so.6', 'amazonlinux-1'],
+                  ['amazonlinux:2', '/lib64/libc.so.6', 'amazonlinux-2']]
        
     container:
       image: ${{ matrix.context[0] }}
@@ -30,11 +30,11 @@ jobs:
         mkdir -p /abi
         # Note this assumes the filename does not matter
         cp ${{ matrix.context[1] }} /abi/libc.so
-
+       
     - name: Upload Libs
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.context[0] }}-libs
+        name: ${{ matrix.context[2] }}-libs
         path: /abi/libc.so
 
   diffs:
@@ -45,62 +45,62 @@ jobs:
       matrix:
 
         # Testing every paired one! And the same for sanity check
-        libs: [['ubuntu:18.04-libs', 'ubuntu:18.04-libs'],
-               ['ubuntu:18.04-libs', 'ubuntu:18.04-libs'],
-               ['ubuntu:18.04-libs', 'ubuntu:20.04-libs'],
-               ['ubuntu:18.04-libs', 'ubuntu:22.04-libs'],
-               ['ubuntu:18.04-libs', 'centos:6-libs'],
-               ['ubuntu:18.04-libs', 'centos:7-libs'],
-               ['ubuntu:18.04-libs', 'centos:8-libs'],
-               ['ubuntu:18.04-libs', 'rockylinux:8-libs'],
-               ['ubuntu:18.04-libs', 'rockylinux:9-libs'],
-               ['ubuntu:18.04-libs', 'amazonlinux:1-libs'],
-               ['ubuntu:18.04-libs', 'amazonlinux:2-libs'],
-               ['ubuntu:20.04-libs', 'ubuntu:20.04-libs'],
-               ['ubuntu:20.04-libs', 'ubuntu:22.04-libs'],
-               ['ubuntu:20.04-libs', 'centos:6-libs'],
-               ['ubuntu:20.04-libs', 'centos:7-libs'],
-               ['ubuntu:20.04-libs', 'centos:8-libs'],
-               ['ubuntu:20.04-libs', 'rockylinux:8-libs'],
-               ['ubuntu:20.04-libs', 'rockylinux:9-libs'],
-               ['ubuntu:20.04-libs', 'amazonlinux:1-libs'],
-               ['ubuntu:20.04-libs', 'amazonlinux:2-libs'],
-               ['ubuntu:22.04-libs', 'ubuntu:22.04-libs'],
-               ['ubuntu:22.04-libs', 'centos:6-libs'],
-               ['ubuntu:22.04-libs', 'centos:7-libs'],
-               ['ubuntu:22.04-libs', 'centos:8-libs'],
-               ['ubuntu:22.04-libs', 'rockylinux:8-libs'],
-               ['ubuntu:22.04-libs', 'rockylinux:9-libs'],
-               ['ubuntu:22.04-libs', 'amazonlinux:1-libs'],
-               ['ubuntu:22.04-libs', 'amazonlinux:2-libs'],
-               ['centos:6-libs', 'centos:6-libs'],
-               ['centos:6-libs', 'centos:7-libs'],
-               ['centos:6-libs', 'centos:8-libs'],
-               ['centos:6-libs', 'rockylinux:8-libs'],
-               ['centos:6-libs', 'rockylinux:9-libs'],
-               ['centos:6-libs', 'amazonlinux:1-libs'],
-               ['centos:6-libs', 'amazonlinux:2-libs'],
-               ['centos:7-libs', 'centos:7-libs'],
-               ['centos:7-libs', 'centos:8-libs'],
-               ['centos:7-libs', 'rockylinux:8-libs'],
-               ['centos:7-libs', 'rockylinux:9-libs'],
-               ['centos:7-libs', 'amazonlinux:1-libs'],
-               ['centos:7-libs', 'amazonlinux:2-libs'],
-               ['centos:8-libs', 'centos:8-libs'],
-               ['centos:8-libs', 'rockylinux:8-libs'],
-               ['centos:8-libs', 'rockylinux:9-libs'],
-               ['centos:8-libs', 'amazonlinux:1-libs'],
-               ['centos:8-libs', 'amazonlinux:2-libs'],
-               ['rockylinux:8-libs', 'rockylinux:8-libs'],
-               ['rockylinux:8-libs', 'rockylinux:9-libs'],
-               ['rockylinux:8-libs', 'amazonlinux:1-libs'],
-               ['rockylinux:8-libs', 'amazonlinux:2-libs'],
-               ['rockylinux:9-libs', 'rockylinux:9-libs'],
-               ['rockylinux:9-libs', 'amazonlinux:1-libs'],
-               ['rockylinux:9-libs', 'amazonlinux:2-libs'],
-               ['amazonlinux:1-libs', 'amazonlinux:1-libs'],
-               ['amazonlinux:1-libs', 'amazonlinux:2-libs'],
-               ['amazonlinux:2-libs', 'amazonlinux:2-libs']]
+        libs: [['ubuntu-18.04-libs', 'ubuntu-18.04-libs'],
+               ['ubuntu-18.04-libs', 'ubuntu-18.04-libs'],
+               ['ubuntu-18.04-libs', 'ubuntu-20.04-libs'],
+               ['ubuntu-18.04-libs', 'ubuntu-22.04-libs'],
+               ['ubuntu-18.04-libs', 'centos-6-libs'],
+               ['ubuntu-18.04-libs', 'centos-7-libs'],
+               ['ubuntu-18.04-libs', 'centos-8-libs'],
+               ['ubuntu-18.04-libs', 'rockylinux-8-libs'],
+               ['ubuntu-18.04-libs', 'rockylinux-9-libs'],
+               ['ubuntu-18.04-libs', 'amazonlinux-1-libs'],
+               ['ubuntu-18.04-libs', 'amazonlinux-2-libs'],
+               ['ubuntu-20.04-libs', 'ubuntu-20.04-libs'],
+               ['ubuntu-20.04-libs', 'ubuntu-22.04-libs'],
+               ['ubuntu-20.04-libs', 'centos-6-libs'],
+               ['ubuntu-20.04-libs', 'centos-7-libs'],
+               ['ubuntu-20.04-libs', 'centos-8-libs'],
+               ['ubuntu-20.04-libs', 'rockylinux-8-libs'],
+               ['ubuntu-20.04-libs', 'rockylinux-9-libs'],
+               ['ubuntu-20.04-libs', 'amazonlinux-1-libs'],
+               ['ubuntu-20.04-libs', 'amazonlinux-2-libs'],
+               ['ubuntu-22.04-libs', 'ubuntu-22.04-libs'],
+               ['ubuntu-22.04-libs', 'centos-6-libs'],
+               ['ubuntu-22.04-libs', 'centos-7-libs'],
+               ['ubuntu-22.04-libs', 'centos-8-libs'],
+               ['ubuntu-22.04-libs', 'rockylinux-8-libs'],
+               ['ubuntu-22.04-libs', 'rockylinux-9-libs'],
+               ['ubuntu-22.04-libs', 'amazonlinux-1-libs'],
+               ['ubuntu-22.04-libs', 'amazonlinux-2-libs'],
+               ['centos-6-libs', 'centos-6-libs'],
+               ['centos-6-libs', 'centos-7-libs'],
+               ['centos-6-libs', 'centos-8-libs'],
+               ['centos-6-libs', 'rockylinux-8-libs'],
+               ['centos-6-libs', 'rockylinux-9-libs'],
+               ['centos-6-libs', 'amazonlinux-1-libs'],
+               ['centos-6-libs', 'amazonlinux-2-libs'],
+               ['centos-7-libs', 'centos-7-libs'],
+               ['centos-7-libs', 'centos-8-libs'],
+               ['centos-7-libs', 'rockylinux-8-libs'],
+               ['centos-7-libs', 'rockylinux-9-libs'],
+               ['centos-7-libs', 'amazonlinux-1-libs'],
+               ['centos-7-libs', 'amazonlinux-2-libs'],
+               ['centos-8-libs', 'centos-8-libs'],
+               ['centos-8-libs', 'rockylinux-8-libs'],
+               ['centos-8-libs', 'rockylinux-9-libs'],
+               ['centos-8-libs', 'amazonlinux-1-libs'],
+               ['centos-8-libs', 'amazonlinux-2-libs'],
+               ['rockylinux-8-libs', 'rockylinux-8-libs'],
+               ['rockylinux-8-libs', 'rockylinux-9-libs'],
+               ['rockylinux-8-libs', 'amazonlinux-1-libs'],
+               ['rockylinux-8-libs', 'amazonlinux-2-libs'],
+               ['rockylinux-9-libs', 'rockylinux-9-libs'],
+               ['rockylinux-9-libs', 'amazonlinux-1-libs'],
+               ['rockylinux-9-libs', 'amazonlinux-2-libs'],
+               ['amazonlinux-1-libs', 'amazonlinux-1-libs'],
+               ['amazonlinux-1-libs', 'amazonlinux-2-libs'],
+               ['amazonlinux-2-libs', 'amazonlinux-2-libs']]
 
     steps:
     - name: Download ${{ matrix.libs[0] }}
